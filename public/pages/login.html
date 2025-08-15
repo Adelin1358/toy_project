@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>로그인</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+</head>
+<body>
+<main class="card">
+    <h1>로그인</h1>
+    <form method="POST" action="/login">
+        <label>아이디
+            <input type="text" name="username" required />
+        </label>
+        <label>비밀번호
+            <input type="password" name="password" required />
+        </label>
+        <button type="submit">로그인</button>
+    </form>
+    <p style="text-align:center;margin-top:8px;">
+        <a href="/pages/signup.html">회원가입</a>
+    </p>
+</main>
+</body>
+</html>

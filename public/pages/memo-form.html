@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>메모 작성</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+</head>
+<body>
+<main class="card">
+    <h1>메모 작성</h1>
+    <form method="POST" action="/memo">
+        <textarea name="content" rows="6" placeholder="메모 내용을 입력하세요" required></textarea>
+        <button type="submit">저장</button>
+    </form>
+    <p style="text-align:center;margin-top:8px;">
+        <a href="/memo">메모 목록</a>
+    </p>
+</main>
+</body>
+</html>

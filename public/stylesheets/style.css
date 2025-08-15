@@ -1,0 +1,79 @@
+/* 기본 스타일 초기화 */
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background-color: #f7f9fc;
+    color: #333;
+}
+
+/* 카드 형태 레이아웃 */
+.card {
+    max-width: 420px;
+    margin: 80px auto;
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* 제목 */
+.card h1 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #2563eb;
+}
+
+/* 라벨과 입력 필드 */
+label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+    color: #333;
+}
+input, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    font-size: 14px;
+}
+textarea {
+    resize: vertical;
+}
+
+/* 버튼 */
+button {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px;
+    background-color: #2563eb;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #1e4bb8;
+}
+
+/* 링크 */
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* 작은 안내 문구 */
+p {
+    margin-top: 16px;
+    font-size: 14px;
+    text-align: center;
+}
