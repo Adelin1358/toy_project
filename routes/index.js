@@ -6,6 +6,10 @@ const Memo = require('../models/Memo.js');
 
 const router = express.Router();
 
+router.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+});
 /** === 데모용 유저 저장소(메모리) ===
  * 실제 서비스에서는 DB(User 모델)로 바꾸세요.
  */
@@ -76,6 +80,8 @@ router.post('/signup', async (req, res) => {
 });
 
 // 로그인 처리: POST /login
+// 로그인 처리: POST /login
+// 로그인 처리: POST /login
 router.post('/login', async (req, res) => {
     try {
         const rawUsername = typeof req.body.username === 'string' ? req.body.username : '';
@@ -94,12 +100,22 @@ router.post('/login', async (req, res) => {
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return authFail(res);
 
-        // 세션 기록
-        req.session.userId = user.id;
-        req.session.username = user.username;
+        // ✅ 세션 재생성 후, 세션 정보 저장
+        req.session.regenerate(err => {
+            if (err) {
+                console.error('session regenerate error:', err);
+                return res.status(500).send('<p>세션 오류</p><p><a href="/">로그인 화면</a></p>');
+            }
+            req.session.userId = String(user.id);
+            req.session.username = user.username;
 
-        // 로그인 성공 → 메모 목록으로
-        res.redirect('/memo');
+            // ⬇️ 화면에 보여줄 메타데이터(표시용)
+            req.session.loginAt = Date.now();
+            req.session.ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+            req.session.ua = req.headers['user-agent'] || '';
+
+            res.redirect('/memo');
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('<p>서버 오류가 발생했습니다</p><p><a href="/">로그인 화면</a></p>');
@@ -113,8 +129,17 @@ function authFail(res) {
 }
 
 // 로그아웃: POST /logout
+// 로그아웃: POST /logout
 router.post('/logout', (req, res) => {
-    req.session.destroy(() => res.redirect('/'));
+    req.session.destroy(err => {
+        if (err) {
+            console.error('session destroy error:', err);
+            return res.status(500).send('<p>세션 파기 실패</p><p><a href="/memo">뒤로</a></p>');
+        }
+        // ✅ 핵심: 세션 쿠키 제거 (기본 이름: connect.sid)
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+    });
 });
 
 /* ---------- 메모: 작성/목록 ---------- */
@@ -149,7 +174,6 @@ router.get('/memo', requireLogin, async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        // JSON은 오직 ?format=json 때만 (클라 포맷팅 쉬우라고 ISO로)
         if (req.query.format === 'json') {
             return res.json(list.map(m => ({
                 _id: m._id,
@@ -162,11 +186,33 @@ router.get('/memo', requireLogin, async (req, res) => {
             `<li>${escapeHtml(m.content)} <small>(${new Date(m.createdAt).toLocaleString()})</small></li>`
         ).join('');
 
+        // ✅ 세션 표시용 데이터 (세션ID 일부 마스킹)
+        const sid = req.sessionID || '';
+        const sidShown = sid ? `${sid.slice(0, 8)}…${sid.slice(-4)}` : '(없음)';
+        const loginAtText = req.session.loginAt ? new Date(req.session.loginAt).toLocaleString() : '-';
+        const ip = escapeHtml(req.session.ip || '-');
+        const ua = escapeHtml(req.session.ua || '-');
+
         res.send(`
       <link rel="stylesheet" href="/stylesheets/style.css" />
       <main class="card">
         <h1>${escapeHtml(req.session.username)}님의 메모</h1>
+
+        <!-- ✅ 로그인 세션 정보 박스 -->
+        <section class="session-box" style="margin:12px 0;padding:12px;border:1px solid #ddd;border-radius:8px;">
+          <h3 style="margin:0 0 8px;">현재 로그인 정보</h3>
+          <ul style="margin:0;padding-left:18px;line-height:1.6;">
+            <li><b>UserID:</b> ${escapeHtml(String(req.session.userId))}</li>
+            <li><b>Username:</b> ${escapeHtml(String(req.session.username))}</li>
+            <li><b>Session ID:</b> ${escapeHtml(sidShown)} <small>(일부 마스킹)</small></li>
+            <li><b>Login At:</b> ${loginAtText}</li>
+            <li><b>Client IP:</b> ${ip}</li>
+            <li><b>User-Agent:</b> ${ua}</li>
+          </ul>
+        </section>
+
         <ul>${items || '<li>작성한 메모가 없습니다.</li>'}</ul>
+
         <p><a href="/pages/memo-form.html">새 메모</a> | <a href="/memo?format=json">JSON 보기</a></p>
         <form method="POST" action="/logout" style="margin-top:12px;">
           <button type="submit">로그아웃</button>
@@ -178,5 +224,6 @@ router.get('/memo', requireLogin, async (req, res) => {
         res.status(500).send('<p>목록을 불러오는 중 오류가 발생했습니다</p><p><a href="/">홈</a></p>');
     }
 });
+
 
 module.exports = router;

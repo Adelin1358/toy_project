@@ -35,10 +35,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 세션
 app.use(session({
-    secret: 'dev-only-secret',
+    secret: process.env.SESSION_SECRET || 'dev-secret',
     resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true }
+    saveUninitialized: false,   // ✅ 빈 세션 저장 방지
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: false,            // HTTPS라면 true
+        maxAge: 1000 * 60 * 60    // 1h
+    }
+    // store: 프로덕션은 MemoryStore 대신 Redis 등 사용 권장
 }));
 
 // 라우팅
